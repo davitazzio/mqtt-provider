@@ -13,28 +13,28 @@ import (
 )
 
 // A mqttservice does nothing.
-type mqttservice struct {
+type Mqttservice struct {
 	RemoteHost string
 }
 
 type mqttserviceList struct {
-	items []*mqttservice
+	items []*Mqttservice
 }
 
-func (pl *mqttserviceList) GetItems() []*mqttservice {
+func (pl *mqttserviceList) GetItems() []*Mqttservice {
 	return pl.items
 }
 
-func (pl *mqttserviceList) AddService(service *mqttservice) {
+func (pl *mqttserviceList) AddService(service *Mqttservice) {
 	pl.items = append(pl.items, service)
 
 }
 
 var instances *mqttserviceList
 
-func GetInstance(remoteHost string) *mqttservice {
+func GetInstance(remoteHost string) *Mqttservice {
 
-	// Pattern singleton for each brocker created
+	// Pattern singleton for each broker created
 	if instances == nil {
 		instances = &mqttserviceList{}
 	}
@@ -44,12 +44,12 @@ func GetInstance(remoteHost string) *mqttservice {
 		}
 	}
 
-	newbroker := &mqttservice{RemoteHost: remoteHost}
+	newbroker := &Mqttservice{RemoteHost: remoteHost}
 	instances.AddService(newbroker)
 	return newbroker
 }
 
-func (p *mqttservice) Startbroker(nodePort string, remoteUser string, logger logging.Logger) (string, error) {
+func (p *Mqttservice) Startbroker(nodePort string, remoteUser string, logger logging.Logger) (string, error) {
 
 	client, session, err := connectToHost(remoteUser, p.RemoteHost)
 	if err != nil {
@@ -58,7 +58,10 @@ func (p *mqttservice) Startbroker(nodePort string, remoteUser string, logger log
 		return "", err
 	}
 
-	_, err = session.CombinedOutput(fmt.Sprintf("scp -r /home/dtazzioli/mqtt-provider/hivemq-4.28.0 %s@%s:/home/%s", remoteUser, p.RemoteHost, remoteUser))
+	command_str := fmt.Sprintf("scp -r dtazzioli@dtazzioli-processprovider.cloudmmwunibo.it:/home/dtazzioli/hivemq-4.28.0 /home/%s", remoteUser)
+	logger.Debug(command_str)
+	result, err := session.CombinedOutput(command_str)
+	logger.Debug(string(result))
 	if err != nil {
 		logger.Debug("errore COPIA")
 		logger.Debug(err.Error())
@@ -86,7 +89,7 @@ func (p *mqttservice) Startbroker(nodePort string, remoteUser string, logger log
 
 }
 
-func (p *mqttservice) GetRemoteHost() string {
+func (p *Mqttservice) GetRemoteHost() string {
 	return p.RemoteHost
 }
 
@@ -100,12 +103,12 @@ func Deletemqttservice(remoteHost string) {
 		}
 	}
 }
-func remove(s []*mqttservice, i int) []*mqttservice {
+func remove(s []*Mqttservice, i int) []*Mqttservice {
 	s[i] = s[len(s)-1]
 	return s[:len(s)-1]
 }
 
-func (p *mqttservice) BrockerExist(remoteUser string, logger logging.Logger) bool {
+func (p *Mqttservice) BrokerExist(remoteUser string, logger logging.Logger) bool {
 	client, session, err := connectToHost(remoteUser, p.RemoteHost)
 	if err != nil {
 		logger.Debug("errore CONNESSIONE")
@@ -119,11 +122,13 @@ func (p *mqttservice) BrockerExist(remoteUser string, logger logging.Logger) boo
 		logger.Debug(err.Error())
 		return false
 	}
+	logger.Debug(string(output))
 	client.Close()
 	return string(output) != ""
 }
-func (p *mqttservice) Observebroker(nodePort string, remoteUser string, logger logging.Logger) (int, error) {
+func (p *Mqttservice) Observebroker(nodePort string, remoteUser string, logger logging.Logger) (int, error) {
 
+	logger.Debug("OSSERVO IL BROKER")
 	resp, err := http.Get(fmt.Sprintf("http://%s:9399/metrics", p.RemoteHost))
 	if err != nil {
 		logger.Debug("errore CONNESSIONE")
@@ -141,18 +146,22 @@ func (p *mqttservice) Observebroker(nodePort string, remoteUser string, logger l
 		}
 		words := strings.Split(line, " ")
 		// fmt.Print(words[0])
-		if words[0] == "com_hivemq_cluster_message_executor_queued_tasks" {
-			fmt.Printf(words[1])
+		if words[0] == "com_hivemq_messages_client_queued_count" {
+			for _, tmp := range words {
+				logger.Debug(tmp)
+			}
 			queue_str = words[1]
 		}
 
 	}
-	queue, _ := strconv.Atoi(queue_str)
-	return queue, nil
+	queue, _ := strconv.ParseFloat(queue_str, 64)
+	logger.Debug("LETTA LA DIMENSIONE DELLA CODA: ")
+	logger.Debug(fmt.Sprintf("%d", int(queue)))
+	return int(queue), nil
 
 }
 
-func (p *mqttservice) Terminatebroker(nodePort string, remoteUser string, logger logging.Logger) error {
+func (p *Mqttservice) Terminatebroker(nodePort string, remoteUser string, logger logging.Logger) error {
 
 	client, session, err := connectToHost(remoteUser, p.RemoteHost)
 	if err != nil {
@@ -191,7 +200,7 @@ func connectToHost(user, host string) (*ssh.Client, *ssh.Session, error) {
 	}
 	sshConfig.HostKeyCallback = ssh.InsecureIgnoreHostKey()
 
-	client, err := ssh.Dial("tcp", host, sshConfig)
+	client, err := ssh.Dial("tcp", host+":22", sshConfig)
 	if err != nil {
 		return nil, nil, err
 	}

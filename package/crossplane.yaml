@@ -1,10 +1,27 @@
-apiVersion: meta.pkg.crossplane.io/v1alpha1
+# apiVersion: pkg.crossplane.io/v1alpha1
+# kind: ControllerConfig
+# metadata:
+#   name: debug-config-mqtt
+# spec:
+#   args:
+#     - --debug
+# ---
+apiVersion: meta.pkg.crossplane.io/v1
 kind: Provider
 metadata:
-  name: provider-mqttprovider
+  name: mqtt-provider-test
+  namespace: crossplane-system
   annotations:
     meta.crossplane.io/maintainer: Crossplane Maintainers <info@crossplane.io>
     meta.crossplane.io/source: github.com/crossplane/provider-mqttprovider
     meta.crossplane.io/license: Apache-2.0
     meta.crossplane.io/description: |
-      A mqttprovider that can be used to create Crossplane providers.
+      A template that can be used to create Crossplane providers.
+spec:
+  ignoreCrossplaneConstraints: true
+  package: docker.io/datavix/mqtt-provider
+  packagePullPolicy: Always
+  revisionActivationPolicy: Automatic
+  revisionHistoryLimit: 0
+  controllerConfigRef: 
+    name: debug-config-mqtt

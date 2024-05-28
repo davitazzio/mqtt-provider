@@ -27,12 +27,15 @@ import (
 
 // MqttBrokerParameters are the configurable fields of a MqttBroker.
 type MqttBrokerParameters struct {
-	ConfigurableField string `json:"configurableField"`
+	NodeAddress string `json:"nodeAddress"`
+	NodePort    string `json:"nodePort"`
+	RemoteUser  string `json:"remoteUser"`
 }
 
 // MqttBrokerObservation are the observable fields of a MqttBroker.
 type MqttBrokerObservation struct {
-	ObservableField string `json:"observableField,omitempty"`
+	QueueState int  `json:"queueState,omitempty"`
+	Active     bool `json:"active,omitempty"`
 }
 
 // A MqttBrokerSpec defines the desired state of a MqttBroker.

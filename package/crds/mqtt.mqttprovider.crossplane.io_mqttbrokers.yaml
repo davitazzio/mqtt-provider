@@ -25,6 +25,9 @@ spec:
     - jsonPath: .status.conditions[?(@.type=='Synced')].status
       name: SYNCED
       type: string
+    - jsonPath: .status.atProvider.queueState
+      name: QUEUE
+      type: integer
     - jsonPath: .metadata.annotations.crossplane\.io/external-name
       name: EXTERNAL-NAME
       type: string
@@ -68,10 +71,16 @@ spec:
                 description: MqttBrokerParameters are the configurable fields of a
                   MqttBroker.
                 properties:
-                  configurableField:
+                  nodeAddress:
+                    type: string
+                  nodePort:
+                    type: string
+                  remoteUser:
                     type: string
                 required:
-                - configurableField
+                - nodeAddress
+                - nodePort
+                - remoteUser
                 type: object
               managementPolicies:
                 default:
@@ -277,8 +286,10 @@ spec:
                 description: MqttBrokerObservation are the observable fields of a
                   MqttBroker.
                 properties:
-                  observableField:
-                    type: string
+                  active:
+                    type: boolean
+                  queueState:
+                    type: integer
                 type: object
               conditions:
                 description: Conditions of the resource.

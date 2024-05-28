@@ -1,9 +1,11 @@
-apiVersion: sample.mqttprovider.crossplane.io/v1alpha1
-kind: MyType
+apiVersion: mqtt.mqttprovider.crossplane.io/v1alpha1
+kind: MqttBroker
 metadata:
-  name: example
+  name: example-3
 spec:
   forProvider:
-    configurableField: test
+    nodeAddress: 'dtazzioli-processprovider2.cloudmmwunibo.it'
+    nodePort: 'ciao'
+    remoteUser: 'dtazzioli'
   providerConfigRef:
     name: example
